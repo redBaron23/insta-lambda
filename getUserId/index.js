@@ -38,7 +38,11 @@ const getUserId = async (userName,cookies) => {
           headers: HEADERS
         };
         
+<<<<<<< HEAD
         
+=======
+    
+>>>>>>> 6ac20f2240089c9c52b1588294f4ec83c4d90e5c
         response = await axios(options);
     }
 
@@ -50,8 +54,11 @@ const getUserId = async (userName,cookies) => {
     }
     else{
         //No existe el userName o muchas request checkear 429
+<<<<<<< HEAD
     
         console.log("Res",response);
+=======
+>>>>>>> 6ac20f2240089c9c52b1588294f4ec83c4d90e5c
     }
 
 }
@@ -74,7 +81,11 @@ exports.handler = async (event) => {
     if (event.httpMethod === "GET"){
         req = event.queryStringParameters;
         userName = req.userName;
+<<<<<<< HEAD
     }else if (event.httpMethod === "POST"){
+=======
+    }else{
+>>>>>>> 6ac20f2240089c9c52b1588294f4ec83c4d90e5c
         //Viene por POST y manda cookies
         req = JSON.parse(event.body);
 
@@ -83,9 +94,12 @@ exports.handler = async (event) => {
             sessionid:"42041085257%3AEM95AKNBzKuVbJ%3A17",
             csrftoken:"5cQ6FQfWagyq7Xg0j2xSqVt84pCTbzAd"
         }*/
+<<<<<<< HEAD
     }else{
         userName = event.userName;
         cookies = event.cookies;
+=======
+>>>>>>> 6ac20f2240089c9c52b1588294f4ec83c4d90e5c
     }
     
     
@@ -97,6 +111,60 @@ exports.handler = async (event) => {
     console.log("Cookies",cookies);
 
     
+<<<<<<< HEAD
+=======
+    
+    try{
+        if( userName ){
+            
+            
+    
+            userId = await getUserId(userName,cookies)
+    
+            console.log("El userId",userId);
+            console.log("El userName",userName);
+            
+            
+            response = {
+                statusCode: 200,
+                headers: {
+                    "Access-Control-Allow-Headers" : "Content-Type",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+                },
+                body: JSON.stringify(userId),
+            };        
+        }else{
+            errMessage = "userName is required";
+            response = {
+                statusCode: 400,
+                headers: {
+                    "Access-Control-Allow-Headers" : "Content-Type",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+                },
+                body: JSON.stringify(errMessage),
+            };            
+        }        
+    }
+    catch(e){
+        if (e.response.status == 429){
+            errMessage = e.response.data;
+            response = {
+                statusCode: 429,
+                headers: {
+                    "Access-Control-Allow-Headers" : "Content-Type",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+                },
+                body: JSON.stringify(errMessage),
+            }; 
+        }
+        
+    }
+    
+
+>>>>>>> 6ac20f2240089c9c52b1588294f4ec83c4d90e5c
     
     try{
         if( userName ){
