@@ -16,14 +16,14 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
         first:50,
         after:lastPage
     };
-    const variables = encodeURIComponent(query_variables);
-    const URL =
+    const variables = encodeURIComponent(JSON.stringify(query_variables));
+    const url =
         "https://www.instagram.com/graphql/query/?query_hash=" +
         queryHash +
         "&variables=" +
         variables;
         
-    
+    console.log("URL",url)
     const HEADERS = {
         Accept: "*/*",
         Cookie: "sessionid=" + cookies.sessionid,
@@ -41,15 +41,19 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
     };
     
     const options = {
-        url: URL,
+        url: url,
         method: "GET",
         headers: HEADERS
     };
     
+    console.log("Antes del req",options)
+    
+   
+    
     const res = await axios(options);
     
     
-    console.log("Respuesta de FOLLOWERS/FOLLOWING",res)
+    console.log("Respuesta de FOLLOWERS/FOLLOWING",res.data)
     
     //Si se consulto seguidores o seguidos
     const data = ( res.data.data.user.edge_followed_by ) ? res.data.data.user.edge_followed_by : res.data.data.user.edge_follow
@@ -62,8 +66,7 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
         users,nextCursor
     }
     
-    console.log("Response",response)
-    return response;
+
   }
 
 
@@ -104,14 +107,14 @@ exports.handler = async (event) => {
     //const userName = event.userName;
 
     
-    
     if (event.userName && event.cookies && event.queryHash){
         
         userName = event.userName;
         cookies = event.cookies;
         queryHash = event.queryHash;
+        lastPage = event.lastPage;
         
-        users = getUsers(userName,cookies,queryHash,lastPage);
+        users = await getUsers(userName,cookies,queryHash,lastPage);
         
         
         response = {

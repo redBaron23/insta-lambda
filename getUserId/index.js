@@ -2,6 +2,7 @@ const axios = require('axios');
 
 
 
+
 const getUserId = async (userName,cookies) => {
     let response;
     const URL = "https://www.instagram.com/" + userName + "/?__a=1";
@@ -37,7 +38,7 @@ const getUserId = async (userName,cookies) => {
           headers: HEADERS
         };
         
-    
+        
         response = await axios(options);
     }
 
@@ -49,6 +50,8 @@ const getUserId = async (userName,cookies) => {
     }
     else{
         //No existe el userName o muchas request checkear 429
+    
+        console.log("Res",response);
     }
 
 }
@@ -71,7 +74,7 @@ exports.handler = async (event) => {
     if (event.httpMethod === "GET"){
         req = event.queryStringParameters;
         userName = req.userName;
-    }else{
+    }else if (event.httpMethod === "POST"){
         //Viene por POST y manda cookies
         req = JSON.parse(event.body);
 
@@ -80,6 +83,9 @@ exports.handler = async (event) => {
             sessionid:"42041085257%3AEM95AKNBzKuVbJ%3A17",
             csrftoken:"5cQ6FQfWagyq7Xg0j2xSqVt84pCTbzAd"
         }*/
+    }else{
+        userName = event.userName;
+        cookies = event.cookies;
     }
     
     
@@ -142,6 +148,6 @@ exports.handler = async (event) => {
     }
     
 
-    
+    console.log("My respuesta",response);
     return response;
 };

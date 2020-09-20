@@ -35,3 +35,19 @@ Resources:
       Description: ''
       MemorySize: 128
       Timeout: 15
+  followers:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: followers/index.handler
+      Runtime: nodejs12.x
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+  userNames:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: userNames/index.handler
+      Runtime: nodejs12.x
+      Description: ''
+      MemorySize: 128
+      Timeout: 15

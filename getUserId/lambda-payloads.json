@@ -1,5 +1,8 @@
 {
     "getUserId": {
-        "lambda": {}
+        "lambda": {
+            "userName": "paper",
+            "password": "hola"
+        }
     }
 }
