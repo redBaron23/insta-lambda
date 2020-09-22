@@ -3,35 +3,35 @@ const AWS = require("aws-sdk");
 const lambda = new AWS.Lambda({ region: "us-east-1" });
 const helper = require("../fun/helper")
 
-const followers = async (userName,cookies,i) => {
+const followings = async (userName,cookies,i) => {
     //ToDo 
     //DynamoDB agregar 200/300 y despues que se genere una lambda
     //Para el resto que los vaya guardando.
     const quantity = (i) ? i : 2500;
-    const queryHash = "c76146de99bb02f6415203be841dd25a";
+    const queryHash = "d04b0a864b4b54837c0d870b0e77e076";
     
     let userNames,lastPage;
     let  isNextPage= true;
-    let followers = [];
+    let followings = [];
     
 
     
 
-    while (isNextPage && (followers.length <= quantity)) {
+    while (isNextPage && (followings.length <= quantity)) {
 
       helper.sleep(1000);
       
       [userNames,lastPage] = await getUserNames(userName,cookies,queryHash,lastPage);
     
 
-      followers = [...followers, ...userNames];
+      followings = [...followings, ...userNames];
       
       isNextPage = (lastPage) ? true : false;
     }
 
 
-    console.log("LENGTH",followers.length)
-    console.log("FOLLOWERS",followers)
+    console.log("LENGTH",followings.length)
+    console.log("FOLLOWERS",followings)
     
     
     
@@ -97,7 +97,7 @@ exports.handler = async (event) => {
     
     
     if (userName && cookies){
-        response = await followers(userName,cookies,quantity);
+        response = await followings(userName,cookies,quantity);
     }
     else{
         response = false;

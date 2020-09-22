@@ -106,7 +106,7 @@ exports.handler = async (event) => {
     
     
     
-    console.log("myEvent",event);
+    console.log("Evento de userNames",event);
 
     let userName,cookies,queryHash,lastPage,response,errMessage,users;
     //Evento desde c9

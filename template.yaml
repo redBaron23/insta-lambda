@@ -51,3 +51,11 @@ Resources:
       Description: ''
       MemorySize: 128
       Timeout: 15
+  followings:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: followings/index.handler
+      Runtime: nodejs12.x
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
