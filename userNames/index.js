@@ -4,8 +4,9 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
 
   const getUsers = async (userName,cookies,queryHash,lastPage) => {
     const followerHash = "c76146de99bb02f6415203be841dd25a";
-    const userId = getUserId( userName,cookies);
+    const userId = await getUserId( userName,cookies);
     
+    console.log(userId)
     let nextCursor,response;
     let users = [];
 
@@ -16,7 +17,9 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
         first:50,
         after:lastPage
     };
+    console.log("Sin parse",JSON.stringify(query_variables))
     const variables = encodeURIComponent(JSON.stringify(query_variables));
+    console.log("VARI",variables)
     const url =
         "https://www.instagram.com/graphql/query/?query_hash=" +
         queryHash +
@@ -61,11 +64,10 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
     users = array.map(i => i.node.username);
     
     nextCursor = (data.page_info.has_next_page) ? data.page_info.end_cursor : false;
-    
     response = {
         users,nextCursor
     }
-    
+    return response
 
   }
 
@@ -87,7 +89,11 @@ const getUserId = async (userName, cookies) => {
 
     lambda.invoke(params, (err, results) => {
         if (err) reject(err);
-        else resolve(results.Payload);
+        else {
+            const json = JSON.parse(results.Payload);
+            console.log("USERID DEL JSON",json.body)
+            resolve(json.body)
+        };
     });
   });
 };

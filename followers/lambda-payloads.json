@@ -2,10 +2,19 @@
     "followers": {
         "lambda": {
             "cookies": {
-                "csrftoken": "ZQAa7QFYIZVYcDYCghoSUXmy0jos1lNE",
-                "sessionid": "42041085257%3A6sPi130nMq3CaE%3A4"
+                "csrftoken": "ojgn915vZ08LBoftK7aSwi33v9K32zlh",
+                "sessionid": "42041085257%3AlzrxlMaQzKhr71%3A11"
             },
+            "userName": "pato.toledo"
+        }
+    },
+    "userNames": {
+        "lambda": {
             "userName": "pato.toledo",
+            "cookies": {
+                "csrftoken": "RvCSJEzbNEFoX31Dsdg0wpjKfugKj24s",
+                "sessionid": "42041085257%3ABWn05GGf2xaiCp%3A12"
+            },
             "queryHash": "c76146de99bb02f6415203be841dd25a"
         }
     }
