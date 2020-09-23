@@ -32,7 +32,10 @@ const followings = async (userName,cookies,i) => {
 
     console.log("LENGTH",followings.length)
     console.log("FOLLOWERS",followings)
-    
+    return {
+        followings: followings,
+        nextCursor: lastPage
+    }
     
     
 }
@@ -74,8 +77,15 @@ exports.handler = async (event) => {
     
     console.log("myEvent",event);
 
-    let req,userName,cookies,response,errMessage,quantity;
+    let req,userName,cookies,errMessage,quantity,json;
     
+    
+    let response = {}
+    response.headers = {
+        "Access-Control-Allow-Headers" : "Content-Type",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+    }
     //Evento desde c9
     //const userName = event.userName;
 
@@ -95,13 +105,24 @@ exports.handler = async (event) => {
 
     }
     
+    try{
+        if (userName && cookies){
+            json = await followings(userName,cookies,quantity);
+            response.statusCode = 200
+            response.body = JSON.stringify(json)        
+        }
+        else{
+            errMessage = "userName and cookies are required";
     
-    if (userName && cookies){
-        response = await followings(userName,cookies,quantity);
+            response.statusCode = 400
+            response.body = JSON.stringify(errMessage)
+        }
     }
-    else{
-        response = false;
+    catch(e){
+        console.log("Algo se rompio",e)
+        errMessage = "Something went wrong";
+        response.statusCode = 500;
+        response.body = JSON.stringify(errMessage);        
     }
-
     return response;
 };

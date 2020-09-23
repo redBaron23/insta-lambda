@@ -1,13 +1,17 @@
 const axios = require("axios");
 const AWS = require("aws-sdk");
+
+AWS.config.update({ region: "us-east-1" });
+
 const lambda = new AWS.Lambda({ region: "us-east-1" });
+
 const helper = require("../fun/helper")
 
 const followers = async (userName,cookies,i) => {
     //ToDo 
     //DynamoDB agregar 200/300 y despues que se genere una lambda
     //Para el resto que los vaya guardando.
-    const quantity = (i) ? i : 2500;
+    const quantity = (i) ? i : 50;
     const queryHash = "c76146de99bb02f6415203be841dd25a";
     
     let userNames,lastPage;
@@ -33,12 +37,53 @@ const followers = async (userName,cookies,i) => {
     console.log("LENGTH",followers.length)
     console.log("FOLLOWERS",followers)
     
-    
+    return {
+        followers: followers,
+        nextCursor: lastPage
+    }
     
 }
 
+/*
+const dynamoGetItem = async (userName) => {
+    
+    
+    const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1"});
+    
+    const params = {
+        TableName: "Users",
+        Key: {
+          userName: userName
+        }
+    }
+    
+    try {
+        const data = await documentClient.get(params).promise();
+        console.log(data);
+    } catch (err) {
+        console.log(err);
+    }
+}
 
 
+const dynameSetItem = async (userName) => {
+    const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1"});
+    
+    const params = {
+        TableName: "Users",
+        Item: {
+            userName: "redbaron398",
+            password: "fafa"
+        }
+    }
+    
+    try {
+        const data = await documentClient.put(params).promise();
+        console.log(data);
+    } catch (err) {
+        console.log(err);
+    }
+}*/
 
 const getUserNames = async (userName, cookies,queryHash,lastPage) => {
 
@@ -72,14 +117,19 @@ exports.handler = async (event) => {
     
     
     
-    console.log("myEvent",event);
+    console.log("followers event",event);
 
-    let req,userName,cookies,response,errMessage,quantity;
+    let req,userName,cookies,errMessage,quantity,json;
     
-    //Evento desde c9
-    //const userName = event.userName;
+    
+    let response = {}
+        response.headers = {
+        "Access-Control-Allow-Headers" : "Content-Type",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+    }
+    
 
-    
     
     if (event.httpMethod === "POST"){
         //Viene por POST y manda cookies
@@ -96,12 +146,26 @@ exports.handler = async (event) => {
     }
     
     
-    if (userName && cookies){
-        response = await followers(userName,cookies,quantity);
-    }
-    else{
-        response = false;
-    }
+    try{
+        
 
+        if (userName && cookies){
+            json = await followers(userName,cookies,quantity);
+            response.statusCode = 200
+            response.body = JSON.stringify(json)        
+        }
+        else{
+            errMessage = "userName and cookies are required";
+    
+            response.statusCode = 400
+            response.body = JSON.stringify(errMessage)
+        }
+    }
+    catch(e){
+        console.log("Algo se rompio",e)
+        errMessage = "Something went wrong";
+        response.statusCode = 500;
+        response.body = JSON.stringify(errMessage);
+    }
     return response;
 };
