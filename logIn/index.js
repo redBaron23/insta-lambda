@@ -44,12 +44,6 @@ const goToProfile = async (page, USERNAME) => {
   }
 }
 
-const parseCookies = async (arr) => {
-  let cookies = {};
-  cookies.sessionid = arr.find(i => i.name === "sessionid").value;
-  cookies.csrftoken = arr.find(i => i.name === "csrftoken").value;
-  return cookies;
-}
 
 const  getCookies = async (page, USERNAME) => {
   let arr
@@ -214,6 +208,8 @@ exports.handler = async (event) => {
       try{
         cookies = await logIn(userName,password,code);
         
+        //Guardo en db
+        await dynamoSetUser(userName,password,cookies);
         console.log("RES",cookies);
         
 

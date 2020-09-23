@@ -67,8 +67,13 @@ exports.handler = async (event) => {
     
     console.log("myEvent",event);
 
-    let userId,req,userName,cookies,response,errMessage;
-    
+    let userId,req,userName,cookies,errMessage;
+    let response = {}
+    response.headers = {
+        "Access-Control-Allow-Headers" : "Content-Type",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+    }    
     //Evento desde c9
     //const userName = event.userName;
 
@@ -106,6 +111,7 @@ exports.handler = async (event) => {
     
 
     
+    
     try{
         if( userName ){
             
@@ -116,44 +122,28 @@ exports.handler = async (event) => {
             console.log("El userId",userId);
             console.log("El userName",userName);
             
-            
-            response = {
-                statusCode: 200,
-                headers: {
-                    "Access-Control-Allow-Headers" : "Content-Type",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
-                },
-                body: JSON.stringify(parseInt(userId,10)),
-            };        
+            response.statusCode = 200
+            response.body = JSON.stringify(parseInt(userId,10))
+      
         }else{
             errMessage = "userName is required";
-            response = {
-                statusCode: 400,
-                headers: {
-                    "Access-Control-Allow-Headers" : "Content-Type",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
-                },
-                body: JSON.stringify(errMessage),
-            };            
+
+            response.statusCode = 400
+            response.body = JSON.stringify(errMessage)
+        
         }        
     }
     catch(e){
         if (e.response.status == 429){
             errMessage = e.response.data;
-            response = {
-                statusCode: 429,
-                headers: {
-                    "Access-Control-Allow-Headers" : "Content-Type",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
-                },
-                body: JSON.stringify(errMessage),
-            }; 
+
+            response.statusCode = 429
+            response.body = JSON.stringify(errMessage)
+
         }
         
     }
+    
     
 
     console.log("My respuesta",response);
