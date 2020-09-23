@@ -1,10 +1,36 @@
 const chromium = require('chrome-aws-lambda');
 
 
+const AWS = require("aws-sdk");
+
+AWS.config.update({ region: "us-east-1" });
+
 
 const HEADLESS = true;
 
 const BROWSER = "chromium";
+
+
+
+const dynamoSetUser = async (userName,password,cookies) => {
+    const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1"});
+    
+    const params = {
+        TableName: "Users",
+        Item: {
+            userName: userName,
+            password: password,
+            cookies: cookies
+        }
+    }
+    
+    try {
+        const data = await documentClient.put(params).promise();
+        console.log(data);
+    } catch (err) {
+        console.log(err);
+    }
+}
 
 
 
@@ -18,34 +44,30 @@ const goToProfile = async (page, USERNAME) => {
   }
 }
 
-
+const parseCookies = async (arr) => {
+  let cookies = {};
+  cookies.sessionid = arr.find(i => i.name === "sessionid").value;
+  cookies.csrftoken = arr.find(i => i.name === "csrftoken").value;
+  return cookies;
+}
 
 const  getCookies = async (page, USERNAME) => {
+  let arr
+  let cookies = {}
   const usefulCookies = ["sessionid", "csrftoken", "shbid"];
   await goToProfile(page, USERNAME);
   const browserCookies = await page.cookies();
   console.log(browserCookies)
-  let cookies = browserCookies.filter(i => usefulCookies.includes(i.name));
-  let existCsrftoken = cookies.some(i => i.name === "csrftoken");
-  let existSessionid = cookies.some(i => i.name === "sessionid");
-  let existShbid = cookies.some(i => i.name === "shbid");
+  arr = browserCookies.filter(i => usefulCookies.includes(i.name));
+  let existCsrftoken = arr.some(i => i.name === "csrftoken");
+  let existSessionid = arr.some(i => i.name === "sessionid");
   //not important cookie
-  if (existShbid) {
-    cookies.push({
-      name: "shbid",
-      value: "13095",
-      domain: ".instagram.com",
-      path: "/",
-      expires: 1593920567.071231,
-      size: 10,
-      httpOnly: true,
-      secure: true,
-      session: false
-    });
-  }
-  console.log(cookies);
+
+  
   if (existCsrftoken && existSessionid) {
     console.log("Session created");
+    cookies.sessionid = arr.find(i => i.name === "sessionid").value;
+    cookies.csrftoken = arr.find(i => i.name === "csrftoken").value;    
   } else {
     throw "NEED MORE COOKIES";
   }
@@ -53,6 +75,7 @@ const  getCookies = async (page, USERNAME) => {
 }
 
 const logIn = async (USERNAME, PASSWORD, CODE) => {
+    let cookies,error;
     const browser = await chromium.puppeteer.launch({
         executablePath: await chromium.executablePath,
         args: chromium.args,
@@ -86,9 +109,8 @@ const logIn = async (USERNAME, PASSWORD, CODE) => {
     await btn.evaluate(btn => btn.click());
     //To get cookies
     await page.waitForSelector(INSTAGRAM_LOGO, { timeout: 5000 });
-    const res = await getCookies(page, USERNAME);
+    cookies = await getCookies(page, USERNAME);
     console.log("Logged Successful()");
-    return res;
   } catch (e) {
     let errCode;
 
@@ -102,7 +124,10 @@ const logIn = async (USERNAME, PASSWORD, CODE) => {
       if (message.includes("password")) {
         console.log("Incorrect password for " + USERNAME);
         // 401 == incorrect password
-       errCode = 401;
+        error = {
+            code:401,
+            message:"Incorrect password"
+          };   
       } else {
         // -1 unknown error
        errCode = -1;
@@ -110,8 +135,8 @@ const logIn = async (USERNAME, PASSWORD, CODE) => {
       }
     }
     catch(e){
-      //Need a code
-      console.log("Need the code!")
+      //Need auth code
+      console.log("Need the code!",e)
       const UNUSUAL_ERROR_TEXT = "#react-root > section > div > div > div.GNbi9 > div > p";
       let unusualTextHtml = await page.$(UNUSUAL_ERROR_TEXT);
       const unusualText = await page.evaluate(i => i.textContent, unusualTextHtml);
@@ -137,21 +162,24 @@ const logIn = async (USERNAME, PASSWORD, CODE) => {
           await page.waitForSelector(INSTAGRAM_LOGO, { timeout: 5000 });
           const res = await getCookies(page, USERNAME);
           console.log("Logged Successful()");
-          errCode = res;
+          
         }
         else{
           //Need code
-          errCode = 402        
+          error = {
+            code:402,
+            message:"Need auth code"
+          };      
         }
 
       }
     }
-    finally{
-      return errCode;      
-    }
+
 
   } finally {
     browser.close();
+    if (error) throw(error);
+    return cookies; 
   }
 }
 
@@ -166,28 +194,73 @@ exports.handler = async (event) => {
     
     //Post parameters
     
-    console.log("event",event)
+    let userName,password,req,response,code,cookies,errMessage;
     
-    const req = JSON.parse(event.body);
-
-    const userName = req.userName;
-    const password = req.password;
-    const code = (req.code) ? req.code : null;
-    console.log(userName,password);
-
-    const cookies = await logIn(userName,password,code);
-
-    console.log("RES",cookies);
+    console.log("Login Event",event)
     
-    const response = {
-        statusCode: 200,
+    
+    req = (event.httpMethod === "POST") ? JSON.parse(event.body) : event
+    
+    if (req.password && req.userName){
+      
+      userName = req.userName;
+      password = req.password;
+      
+      
+      code = (req.code) ? req.code : null;
+      console.log("Data",userName,password,code);
+      
+      
+      try{
+        cookies = await logIn(userName,password,code);
+        
+        console.log("RES",cookies);
+        
+
+        response = {
+          statusCode: 200,
+          headers: {
+          "Access-Control-Allow-Headers" : "Content-Type",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+          },
+          body: JSON.stringify(cookies),
+        };       
+      }
+      catch(e){
+        console.log("Error en login",e)
+        response = {
+          statusCode: e.code,
+          headers: {
+          "Access-Control-Allow-Headers" : "Content-Type",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+          },
+          body: JSON.stringify(e.message),
+        };          
+      }
+
+    }
+    else{
+      errMessage = "Need userName and password"
+      response = {
+        statusCode: 400,
         headers: {
-            "Access-Control-Allow-Headers" : "Content-Type",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+        "Access-Control-Allow-Headers" : "Content-Type",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
         },
-        body: JSON.stringify(cookies),
-    };
+        body: JSON.stringify(errMessage),
+      };
+    }
+
+
+    
+    
+    
+
+    
+
     
     return response;
 };
