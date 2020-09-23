@@ -3,18 +3,18 @@ const AWS = require("aws-sdk");
 const lambda = new AWS.Lambda({ region: "us-east-1" });
 const helper = require("../fun/helper")
 
-const followings = async (userName,cookies,i) => {
+const followings = async (userName,cookies,i,nextCursor) => {
     //ToDo 
     //DynamoDB agregar 200/300 y despues que se genere una lambda
     //Para el resto que los vaya guardando.
-    const quantity = (i) ? i : 500;
+    const quantity = (i) ? i : 300;
     const queryHash = "d04b0a864b4b54837c0d870b0e77e076";
     
     let userNames,lastPage;
     let  isNextPage= true;
     let followings = [];
     
-
+    lastPage = nextCursor;
     
 
     while (isNextPage && (followings.length <= quantity)) {
@@ -77,7 +77,7 @@ exports.handler = async (event) => {
     
     console.log("myEvent",event);
 
-    let req,userName,cookies,errMessage,quantity,json;
+    let userName,cookies,errMessage,quantity,json,nextCursor;
     
     
     let response = {}
@@ -91,19 +91,14 @@ exports.handler = async (event) => {
 
     
     
-    if (event.httpMethod === "POST"){
-        //Viene por POST y manda cookies
-        req = JSON.parse(event.body);
-        
-        quantity = req.quantity;
-        userName = req.userName;
-        cookies = req.cookies
-    }else{
-        userName = event.userName;
-        cookies = event.cookies;
-        quantity = event.quantity;
+    const req = (event.httpMethod === "POST") ? JSON.parse(event.body) : event
 
-    }
+    quantity = req.quantity;
+    userName = req.userName;
+    cookies = req.cookies
+    nextCursor = req.nextCursor
+    
+ 
     
     try{
         if (userName && cookies){

@@ -7,17 +7,18 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
 
 const helper = require("../fun/helper")
 
-const followers = async (userName,cookies,i) => {
+const followers = async (userName,cookies,i,nextCursor) => {
     //ToDo 
     //DynamoDB agregar 200/300 y despues que se genere una lambda
     //Para el resto que los vaya guardando.
-    const quantity = (i) ? i : 500;
+    const quantity = (i) ? i : 300;
     const queryHash = "c76146de99bb02f6415203be841dd25a";
     
     let userNames,lastPage;
     let  isNextPage= true;
     let followers = [];
     
+    lastPage = nextCursor;
 
     
 
@@ -119,7 +120,8 @@ exports.handler = async (event) => {
     
     console.log("followers event",event);
 
-    let req,userName,cookies,errMessage,quantity,json;
+    let userName,cookies,errMessage,quantity,json,nextCursor;
+    
     
     
     let response = {}
@@ -130,27 +132,18 @@ exports.handler = async (event) => {
     }
     
 
-    
-    if (event.httpMethod === "POST"){
-        //Viene por POST y manda cookies
-        req = JSON.parse(event.body);
-        
-        quantity = req.quantity;
-        userName = req.userName;
-        cookies = req.cookies
-    }else{
-        userName = event.userName;
-        cookies = event.cookies;
-        quantity = event.quantity;
+    const req = (event.httpMethod === "POST") ? JSON.parse(event.body) : event
 
-    }
+    quantity = req.quantity;
+    userName = req.userName;
+    cookies = req.cookies
+    nextCursor = req.nextCursor
     
     
     try{
-        
 
         if (userName && cookies){
-            json = await followers(userName,cookies,quantity);
+            json = await followers(userName,cookies,quantity,nextCursor);
             response.statusCode = 200
             response.body = JSON.stringify(json)        
         }
