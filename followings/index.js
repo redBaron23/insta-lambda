@@ -7,7 +7,7 @@ const followings = async (userName,cookies,i) => {
     //ToDo 
     //DynamoDB agregar 200/300 y despues que se genere una lambda
     //Para el resto que los vaya guardando.
-    const quantity = (i) ? i : 2500;
+    const quantity = (i) ? i : 500;
     const queryHash = "d04b0a864b4b54837c0d870b0e77e076";
     
     let userNames,lastPage;

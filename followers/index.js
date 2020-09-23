@@ -11,7 +11,7 @@ const followers = async (userName,cookies,i) => {
     //ToDo 
     //DynamoDB agregar 200/300 y despues que se genere una lambda
     //Para el resto que los vaya guardando.
-    const quantity = (i) ? i : 50;
+    const quantity = (i) ? i : 500;
     const queryHash = "c76146de99bb02f6415203be841dd25a";
     
     let userNames,lastPage;

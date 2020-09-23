@@ -9,41 +9,39 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
 
 
 const updateData = async(records) => {
-    records.forEach(record => {
-        let marshall,userName,password,cookies,json;
+    
+    
+    await Promise.all(records.map(async (record) => {
+        let marshall,userName,password,cookies,item;
         marshall = record.dynamodb.NewImage;
         console.log("Record de updateData",record.dynamodb.NewImage);
         
         
-        json = AWS.DynamoDB.Converter.unmarshall(marshall)
+        item = AWS.DynamoDB.Converter.unmarshall(marshall)
         
-        console.log("Json ",json)
-        userName = json.userName;
-        password = json.password;
-        cookies = json.cookies;
+        console.log("Json ",item)
+
         
-        saveFollowers(userName,cookies);
-        saveFollowings(userName,cookies);
-        
-    })
-    
+        await saveFollowers(item);
+        await saveFollowings(item);
+    }));
 }
 
-    const saveFollowings = async (userName,cookies) => {
+    const saveFollowings = async (item) => {
+  
         
         let followings,nextCursor;
         
-        [followings,nextCursor] = await getFollowings(userName,cookies);
+        [followings,nextCursor] = await getFollowings(item.userName,item.cookies);
+        
+        item.followings = followings;
+        item.followingsNextCursor = nextCursor;
         
         const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1"});
         
         const params = {
             TableName: "Users",
-            Item: {
-                userName: userName,
-                followings: followings,
-                followingsNextCursor: nextCursor
-            }
+            Item:item
         }
         
         try {
@@ -53,27 +51,25 @@ const updateData = async(records) => {
             console.log(err);
         }      
         
-        
     }
 
 
 
 
-    const saveFollowers = async (userName,cookies) => {
+    const saveFollowers = async (item) => {
         
         let followers,nextCursor;
         
-        [followers,nextCursor] = await getFollowers(userName,cookies);
+        [followers,nextCursor] = await getFollowers(item.userName,item.cookies);
         
+        
+        item.followers = followers;
+        item.followersNextCursor = nextCursor;
         const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1"});
         
         const params = {
             TableName: "Users",
-            Item: {
-                userName: userName,
-                followers: followers,
-                followersNextCursor: nextCursor
-            }
+            Item:item
         }
         
         try {
@@ -103,7 +99,7 @@ const updateData = async(records) => {
                 const json = JSON.parse(results.Payload)//JSON.parse(results.Payload);
                 console.log("json",json);
                 const body = JSON.parse(json.body);
-                resolve([body.users,body.nextCursor])
+                resolve([body.followers,body.nextCursor])
             };
         });
       });
@@ -126,7 +122,7 @@ const updateData = async(records) => {
                 const json = JSON.parse(results.Payload)//JSON.parse(results.Payload);
                 console.log("json",json);
                 const body = JSON.parse(json.body);
-                resolve([body.users,body.nextCursor])
+                resolve([body.followings,body.nextCursor])
             };
         });
       });
