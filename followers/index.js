@@ -11,7 +11,7 @@ const followers = async (userName,cookies,i,nextCursor) => {
     //ToDo 
     //DynamoDB agregar 200/300 y despues que se genere una lambda
     //Para el resto que los vaya guardando.
-    const quantity = (i) ? i : 300;
+    const quantity = (i) ? i : 150;
     const queryHash = "c76146de99bb02f6415203be841dd25a";
     
     let userNames,lastPage;
@@ -102,10 +102,12 @@ const getUserNames = async (userName, cookies,queryHash,lastPage) => {
     lambda.invoke(params, (err, results) => {
         if (err) reject(err);
         else {
-            const json = JSON.parse(results.Payload)//JSON.parse(results.Payload);
-            console.log("json",json);
-            const body = JSON.parse(json.body);
-            resolve([body.users,body.nextCursor])
+            console.log("Result",results)
+            const payload = JSON.parse(results.Payload)//JSON.parse(results.Payload);
+            console.log("json body",payload.body);
+            const json = JSON.parse(payload.body);
+            console.log("Json getusernames",json)
+            resolve([json.users,json.nextCursor])
         };
     });
   });

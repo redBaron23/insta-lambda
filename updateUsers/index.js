@@ -8,35 +8,81 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
 
 
 
-const updateData = async(records) => {
+const onCreate = async(records) => {
     
     
     await Promise.all(records.map(async (record) => {
-        let marshall,userName,password,cookies,item;
+        let marshall,cookies,item,nextCursor;
+        nextCursor = "";
         marshall = record.dynamodb.NewImage;
-        console.log("Record de updateData",record.dynamodb.NewImage);
+        console.log("Record de onCreate",record.dynamodb.NewImage);
         
         
         item = AWS.DynamoDB.Converter.unmarshall(marshall)
         
         console.log("Json ",item)
 
+
+        const [followings,followingsNextCursor] = await getFollowings(item.userName,item.cookies,nextCursor);
+        const [followers,followersNextCursor] = await getFollowers(item.userName,item.cookies,nextCursor);
         
-        await saveFollowers(item);
-        await saveFollowings(item);
+        console.log("RES ACA PAPA",followers)
+        item.followings = followings;
+        item.followingsNextCursor = followingsNextCursor;
+        item.followers = followers;
+        item.followersNextCursor = followersNextCursor; 
+        
+        
+        console.log("___PUNTEROS__",followersNextCursor,followingsNextCursor);
+        await saveData(item);
+        console.log("SE GUARDO CON EXITO_______")
     }));
 }
 
-    const saveFollowings = async (item) => {
+
+const onUpdate = async(records) => {
+    
+    
+    await Promise.all(records.map(async (record) => {
+        let marshall,cookies,item;
+        marshall = record.dynamodb.NewImage;
+        console.log("Record de onUpdate",record.dynamodb.NewImage);
+        
+        
+        item = AWS.DynamoDB.Converter.unmarshall(marshall)
+        
+        console.log("Json ",item)
+
+    
+        
+        
+        const [followings,followingsNextCursor] = (item.followingsNextCursor) ?  await getFollowings(item.userName,item.cookies,item.followingsNextCursor) : [false,false];
+        const [followers,followersNextCursor] = (item.followersNextCursor) ? await getFollowers(item.userName,item.cookies,item.followersNextCursor) : [false,false];
+        
+        if(followings) item.followings = [ ...item.followings, ...followings]
+        if(followers) item.followers = [ ...item.followers, ...followers]
+
+        if (followings || followers){
+            item.followingsNextCursor = followingsNextCursor;
+            item.followersNextCursor = followersNextCursor; 
+        
+        
+            console.log("___PUNTEROS__",followersNextCursor,followingsNextCursor);
+            console.log("Followers",followers.length)
+            console.log("followings",followings.length)
+            
+            await saveData(item);           
+        }
+
+        
+    }));
+}
+
+
+    const saveData = async (item) => {
   
         
-        let followings,nextCursor;
-        
-        [followings,nextCursor] = await getFollowings(item.userName,item.cookies);
-        
-        item.followings = followings;
-        item.followingsNextCursor = nextCursor;
-        
+      
         const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1"});
         
         const params = {
@@ -56,48 +102,26 @@ const updateData = async(records) => {
 
 
 
-    const saveFollowers = async (item) => {
-        
-        let followers,nextCursor;
-        
-        [followers,nextCursor] = await getFollowers(item.userName,item.cookies);
-        
-        
-        item.followers = followers;
-        item.followersNextCursor = nextCursor;
-        const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1"});
-        
-        const params = {
-            TableName: "Users",
-            Item:item
-        }
-        
-        try {
-            const data = await documentClient.put(params).promise();
-            console.log(data);
-        } catch (err) {
-            console.log(err);
-        }      
-        
-        
-    }
-
-    const getFollowers = async (userName, cookies) => {
+    const getFollowers = async (userName, cookies,nextPage) => {
     
+    const nextCursor = (nextPage) ? nextPage : "";
       return await new Promise((resolve, reject) => {
         const params = {
             FunctionName: "cloud9-insta-bot-node-followers-1K7LJLPSTZFC2",
             Payload: JSON.stringify({
                 userName,
-                cookies
+                cookies,
+                nextCursor
             }),
         };
     
         lambda.invoke(params, (err, results) => {
             if (err) reject(err);
             else {
+                console.log("getFollowers RES",results)
+                
                 const json = JSON.parse(results.Payload)//JSON.parse(results.Payload);
-                console.log("json",json);
+                console.log("getFollowers",json);
                 const body = JSON.parse(json.body);
                 resolve([body.followers,body.nextCursor])
             };
@@ -105,23 +129,26 @@ const updateData = async(records) => {
       });
     };
 
-    const getFollowings = async (userName, cookies) => {
+    const getFollowings = async (userName, cookies,nextCursor) => {
     
+
       return await new Promise((resolve, reject) => {
         const params = {
             FunctionName: "cloud9-insta-bot-node-followings-YNPDP2HWRNQG",
             Payload: JSON.stringify({
                 userName,
-                cookies
+                cookies,
+                nextCursor
             }),
         };
     
         lambda.invoke(params, (err, results) => {
             if (err) reject(err);
             else {
+                console.log("getFollowings RES",results.Payload)
                 const json = JSON.parse(results.Payload)//JSON.parse(results.Payload);
-                console.log("json",json);
                 const body = JSON.parse(json.body);
+
                 resolve([body.followings,body.nextCursor])
             };
         });
@@ -136,7 +163,7 @@ exports.handler = async (event) => {
     
     console.log("myEvent",event);
 
-    let userId,req,userName,cookies,errMessage,records;
+    let userId,req,userName,cookies,errMessage,newRecords,updateRecords;
     let response = {}
     response.headers = {
         "Access-Control-Allow-Headers" : "Content-Type",
@@ -144,12 +171,14 @@ exports.handler = async (event) => {
         "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
     }
     console.log("Records [0]",event.Records[0].dynamodb)
-    records = event.Records.filter( i => i.eventName === "INSERT");
+    newRecords = event.Records.filter( i => i.eventName === "INSERT");
+    updateRecords = event.Records.filter( i => i.eventName === "MODIFY");
     try{
-        console.log("Length",records.length)
-        if (records.length > 0) await updateData(records)
+        console.log("Length",newRecords.length)
         
-        console.log("var records",records);
+        if (newRecords.length > 0) await onCreate(newRecords)
+        //if (updateRecords.length > 0) await onUpdate(updateRecords)
+        console.log("var records",newRecords);
         
         errMessage = "Todo ok"
         response.statusCode = 200

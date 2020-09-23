@@ -108,43 +108,43 @@ exports.handler = async (event) => {
     
     console.log("Evento de userNames",event);
 
-    let userName,cookies,queryHash,lastPage,response,errMessage,users;
+    let userName,cookies,queryHash,lastPage,errMessage,users;
+    let response = {}
+    response.headers = {
+        "Access-Control-Allow-Headers" : "Content-Type",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+    }
     //Evento desde c9
     //const userName = event.userName;
 
+    try{
+        if (event.userName && event.cookies && event.queryHash){
+            
+            userName = event.userName;
+            cookies = event.cookies;
+            queryHash = event.queryHash;
+            lastPage = event.lastPage;
+            
     
-    if (event.userName && event.cookies && event.queryHash){
-        
-        userName = event.userName;
-        cookies = event.cookies;
-        queryHash = event.queryHash;
-        lastPage = event.lastPage;
-        
-        users = await getUsers(userName,cookies,queryHash,lastPage);
-        
-        
-        response = {
-            statusCode: 200,
-            headers: {
-                "Access-Control-Allow-Headers" : "Content-Type",
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
-            },
-            body: JSON.stringify(users),
-        };
+            users = await getUsers(userName,cookies,queryHash,lastPage);
+            
+            response.statusCode = 200
+            response.body = JSON.stringify(users)  
+        }
+        else{
+            errMessage = "Bad Request";
+            response.statusCode = 400
+            response.body = JSON.stringify(errMessage)      
+        }        
     }
-    else{
-        errMessage = "Bad Request";
-        response = {
-            statusCode: 400,
-            headers: {
-                "Access-Control-Allow-Headers" : "Content-Type",
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
-            },
-            body: JSON.stringify(errMessage),
-        };        
-    }
+    catch(e){
+        console.log("Crasheo por, probablemente muchas request",e)
+        errMessage = "Hubo un error";
+        response.statusCode = 500
+        response.body = JSON.stringify(errMessage)            
+    }   
+
     
 
 
