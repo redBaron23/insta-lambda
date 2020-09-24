@@ -9,83 +9,64 @@ const helper = require("../fun/helper")
 
 
 
-const onCreate = async(records) => {
+    const getBots = async () => {
+        
+        console.log("Dynamo");
+        const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1"});
+        
+        var params = {
+            TableName : "Bot"
+        };
     
+        const bots =  await documentClient.scan(params).promise();
+        return bots.Items
+    }
     
-    await Promise.all(records.map(async (record) => {
-        let marshall,cookies,item,nextCursor;
-        nextCursor = "";
-        marshall = record.dynamodb.NewImage;
-        console.log("Record de onCreate",record.dynamodb.NewImage);
-        
-        
-        item = AWS.DynamoDB.Converter.unmarshall(marshall)
-        
-        console.log("Json ",item)
-
-
-        const [followings,followingsNextCursor] = await getFollowings(item.userName,item.cookies,nextCursor);
-        const [followers,followersNextCursor] = await getFollowers(item.userName,item.cookies,nextCursor);
-        
-        console.log("RES ACA PAPA",followers)
-        item.followings = followings;
-        item.followingsNextCursor = followingsNextCursor;
-        item.followers = followers;
-        item.followersNextCursor = followersNextCursor; 
-        
-        
-        console.log("___PUNTEROS__",followersNextCursor,followingsNextCursor);
-        await saveData(item);
-        console.log("SE GUARDO CON EXITO_______")
-    }));
-}
-
-
-const onUpdate = async(records) => {
+    const follow = async(userName,cookies) => {
+        console.log("Follow",userName);
+    }
     
-    await helper.sleep(4000)//4 seg
-    await Promise.all(records.map(async (record) => {
-        let marshall,cookies,item,userName,newFollowings,newFollowers;
-        let update = false;
+    const unFollow = async(userName,cookies) => {
+        console.log("Follow",userName);
+    }
+    
+    const saveBot = async(bot) =>{
+        console.log("Bot guardado",bot);
+    }
 
-        
-        marshall = record.dynamodb.NewImage;
-        console.log("Record de onUpdate",record.dynamodb.NewImage);
-        
-        item = AWS.DynamoDB.Converter.unmarshall(marshall)
-        
-        userName = item.userName;
-        cookies = item.cookies;
-        console.log("Item received ",item)
-        
-        
-        
-        
-        
-        
-        if (item.followersNextCursor){
-            const [followers,followersNextCursor] = await getFollowers(userName,cookies,item.followersNextCursor)
-            newFollowers = [ ...item.followers, ...followers]
-            item.followers = newFollowers;
-            item.followersNextCursor = followersNextCursor;
-            update = true
+    const start = async(bots) => {
+        await Promise.all(bots.map(async (bot) => {
             
-        }
-        else if (item.followingsNextCursor){
-            const [followings,followingsNextCursor] = (item.followingsNextCursor) ? await getFollowings(userName,cookies,item.followingsNextCursor) : [false,false]
-            newFollowings = [ ...item.followings, ...followings]
-            item.followings = newFollowings;
-            item.followingsNextCursor = followingsNextCursor;
-            update = true
-        }
-        
+            if (bot.status === "enabled"){
+                let userName,cookies;
+                console.log(bot);
+                cookies = bot.cookies;
+                if (bot.action === "follow"){
+                    userName = bot.follow.pop();
+                    await follow(userName,cookies);
+                    
+                    //Static = sigue siempre a los mismos. Dynamic, los sigue, los deja de seguir y ahi queda
+                    if ((bot.type === "staticFarm") || (bot.type === "dynamicFarm")) bot.unfollow.push(userName)
+                    
+                }
+                else{
+                    userName = bot.unfollow.pop();
+                    await unFollow(userName,cookies);
+                    
+                    if (bot.type === "staticFarm") bot.follow.push(userName)
+    
+                    console.log("unFollow",bot.unfollow)
+    
+                }            
+            
+                await saveBot(bot);
+            }
+    
+            
+        }));
+    }
 
-        
-        if (update) await saveData(item);
 
-        
-    }));
-}
 
 
     const saveData = async (item) => {
@@ -95,7 +76,7 @@ const onUpdate = async(records) => {
         const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1"});
         
         const params = {
-            TableName: "Users",
+            TableName: "Bot",
             Item:item
         }
         
@@ -110,87 +91,25 @@ const onUpdate = async(records) => {
 
 
 
-
-    const getFollowers = async (userName, cookies,nextPage) => {
-    
-    const nextCursor = (nextPage) ? nextPage : "";
-      return await new Promise((resolve, reject) => {
-        const params = {
-            FunctionName: "cloud9-insta-bot-node-followers-1K7LJLPSTZFC2",
-            Payload: JSON.stringify({
-                userName,
-                cookies,
-                nextCursor
-            }),
-        };
-    
-        lambda.invoke(params, (err, results) => {
-            if (err) reject(err);
-            else {
-                console.log("getFollowers RES",results)
-                
-                const json = JSON.parse(results.Payload)//JSON.parse(results.Payload);
-                console.log("getFollowers",json);
-                const body = JSON.parse(json.body);
-                resolve([body.followers,body.nextCursor])
-            };
-        });
-      });
-    };
-
-    const getFollowings = async (userName, cookies,nextCursor) => {
-    
-
-      return await new Promise((resolve, reject) => {
-        const params = {
-            FunctionName: "cloud9-insta-bot-node-followings-YNPDP2HWRNQG",
-            Payload: JSON.stringify({
-                userName,
-                cookies,
-                nextCursor
-            }),
-        };
-    
-        lambda.invoke(params, (err, results) => {
-            if (err) reject(err);
-            else {
-                console.log("getFollowings RES",results.Payload)
-                const json = JSON.parse(results.Payload)//JSON.parse(results.Payload);
-                const body = JSON.parse(json.body);
-
-                resolve([body.followings,body.nextCursor])
-            };
-        });
-      });
-    };
-
-
 exports.handler = async (event) => {
     // TODO implement
     
     
     
-    console.log("myEvent",event);
+    console.log("Update bot",event);
 
-    let userId,req,userName,cookies,errMessage,newRecords,updateRecords;
+    let userId,req,bots,cookies,errMessage,newRecords,updateRecords;
     let response = {}
     response.headers = {
         "Access-Control-Allow-Headers" : "Content-Type",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
     }
-    // console.log("Records [0]",event.Records[0].dynamodb)
-    // newRecords = event.Records.filter( i => i.eventName === "INSERT");
-    // updateRecords = event.Records.filter( i => i.eventName === "MODIFY");
     try{
         
-        console.log("se ejecuto")
-        // console.log("Length",newRecords.length)
-        
-        // if (newRecords.length > 0) await onCreate(newRecords)
-        // if (updateRecords.length > 0) await onUpdate(updateRecords)
-        // console.log("var records",newRecords);
-        
+        bots = await getBots();
+        await start(bots);
+
         errMessage = "Todo ok"
         response.statusCode = 200
         response.body = JSON.stringify(errMessage)        
