@@ -1,5 +1,11 @@
 {
     "updateBot": {
-        "lambda": {}
+        "lambda": {
+            "userName": "pato.toledo",
+            "cookies": {
+                "sessionid": "42170247807%3APImSD6iemME466%3A13",
+                "csrftoken": "y3WSgCxqwxfkR5NtVjRIYAZwHvkZuziD"
+            }
+        }
     }
 }

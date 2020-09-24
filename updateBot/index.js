@@ -5,10 +5,62 @@ const AWS = require("aws-sdk");
 AWS.config.update({ region: "us-east-1" });
 
 const lambda = new AWS.Lambda({ region: "us-east-1" });
-const helper = require("../fun/helper")
+//const helper = require("../fun/helper")
 
 
+    
+    const follow = async (userName, cookies) => {
+        console.log("Follow",userName);
 
+        return await new Promise((resolve, reject) => {
+        const params = {
+            FunctionName: "cloud9-insta-bot-node-follow-117UD4Q03TFEA",
+            Payload: JSON.stringify({
+                userName,
+                cookies,
+            }),
+        };
+        
+            lambda.invoke(params, (err, results) => {
+                if (err) reject(err);
+                else {
+                    const res = JSON.parse(results.Payload);
+                    const status  = (res.statusCode) ? true : false;
+
+                    resolve(status)
+                    
+                };
+            });
+        });
+    };
+
+    const unfollow = async (userName, cookies) => {
+        console.log("unfollow",userName);
+
+
+        return await new Promise((resolve, reject) => {
+        const params = {
+            FunctionName: "cloud9-insta-bot-node-unfollow-16E6PM8EHSVDU",
+            Payload: JSON.stringify({
+                userName,
+                cookies,
+            }),
+        };
+        
+            lambda.invoke(params, (err, results) => {
+                if (err) reject(err);
+                else {
+                    const res = JSON.parse(results.Payload);
+                    const status  = (res.statusCode) ? true : false;
+                    resolve(status)
+                };
+            });
+        });
+    };
+   
+    
+    
+    
     const getBots = async () => {
         
         console.log("Dynamo");
@@ -22,43 +74,43 @@ const helper = require("../fun/helper")
         return bots.Items
     }
     
-    const follow = async(userName,cookies) => {
-        console.log("Follow",userName);
-    }
+
     
-    const unFollow = async(userName,cookies) => {
-        console.log("Follow",userName);
-    }
     
-    const saveBot = async(bot) =>{
-        console.log("Bot guardado",bot);
-    }
 
     const start = async(bots) => {
         await Promise.all(bots.map(async (bot) => {
             
             if (bot.status === "enabled"){
-                let userName,cookies;
+                
+                let userName,cookies,status;
+
                 console.log(bot);
                 cookies = bot.cookies;
                 if (bot.action === "follow"){
                     userName = bot.follow.pop();
-                    await follow(userName,cookies);
-                    
+                    status = await follow(userName,cookies);
+                    console.log("El status",status)
                     //Static = sigue siempre a los mismos. Dynamic, los sigue, los deja de seguir y ahi queda
-                    if ((bot.type === "staticFarm") || (bot.type === "dynamicFarm")) bot.unfollow.push(userName)
-                    
+                    if (status && ((bot.type === "staticFarm") || (bot.type === "dynamicFarm"))) 
+                        bot.unfollow.push(userName);
+                    if (bot.follow.length === 0) bot.action = "unfollow"
                 }
                 else{
                     userName = bot.unfollow.pop();
-                    await unFollow(userName,cookies);
+                    status = await unfollow(userName,cookies);
+                    console.log("El status",status)
+                    console.log("user",userName)                   
+                    //Si es el farm famous, lo agrega a la lista de seguir
+                    if ((status) && (bot.type === "staticFarm"))
+                        bot.follow.push(userName);
                     
-                    if (bot.type === "staticFarm") bot.follow.push(userName)
-    
-                    console.log("unFollow",bot.unfollow)
+                    //Si es el farm famous = static sigue la rutina, sino se da por concluido el bot
+                    ((bot.type === "staticFarm") && (bot.unfollow.length === 0)) ? bot.action = "follow" : bot.status = "disabled"
+                        
     
                 }            
-            
+                                console.log("unfollow",bot.unfollow)
                 await saveBot(bot);
             }
     
@@ -69,15 +121,16 @@ const helper = require("../fun/helper")
 
 
 
-    const saveData = async (item) => {
+    const saveBot = async (bot) => {
   
+        console.log("Bot guardado",bot);
         
       
         const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1"});
         
         const params = {
             TableName: "Bot",
-            Item:item
+            Item:bot
         }
         
         try {
@@ -93,7 +146,7 @@ const helper = require("../fun/helper")
 
 exports.handler = async (event) => {
     // TODO implement
-    
+    //Reprogramar proxima ejecucion en #0
     
     
     console.log("Update bot",event);
@@ -109,7 +162,9 @@ exports.handler = async (event) => {
         
         bots = await getBots();
         await start(bots);
-
+        
+        //#0
+        
         errMessage = "Todo ok"
         response.statusCode = 200
         response.body = JSON.stringify(errMessage)        
