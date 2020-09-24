@@ -5,6 +5,7 @@ const AWS = require("aws-sdk");
 AWS.config.update({ region: "us-east-1" });
 
 const lambda = new AWS.Lambda({ region: "us-east-1" });
+const helper = require("../fun/helper")
 
 
 
@@ -42,18 +43,47 @@ const onCreate = async(records) => {
 
 const onUpdate = async(records) => {
     
-    
+    await helper.sleep(4000)//4 seg
     await Promise.all(records.map(async (record) => {
-        let marshall,cookies,item;
+        let marshall,cookies,item,userName,newFollowings,newFollowers;
+        let update = false;
+
+        
         marshall = record.dynamodb.NewImage;
         console.log("Record de onUpdate",record.dynamodb.NewImage);
         
-        
         item = AWS.DynamoDB.Converter.unmarshall(marshall)
         
-        console.log("Json ",item)
+        userName = item.userName;
+        cookies = item.cookies;
+        console.log("Item received ",item)
+        
+        
+        
+        
+        
+        
+        if (item.followersNextCursor){
+            const [followers,followersNextCursor] = await getFollowers(userName,cookies,item.followersNextCursor)
+            newFollowers = [ ...item.followers, ...followers]
+            item.followers = newFollowers;
+            item.followersNextCursor = followersNextCursor;
+            update = true
+            
+        }
+        else if (item.followingsNextCursor){
+            const [followings,followingsNextCursor] = (item.followingsNextCursor) ? await getFollowings(userName,cookies,item.followingsNextCursor) : [false,false]
+            newFollowings = [ ...item.followings, ...followings]
+            item.followings = newFollowings;
+            item.followingsNextCursor = followingsNextCursor;
+            update = true
+        }
+        
 
-    
+        
+        if (update) await saveData(item);
+
+        /*
         
         
         const [followings,followingsNextCursor] = (item.followingsNextCursor) ?  await getFollowings(item.userName,item.cookies,item.followingsNextCursor) : [false,false];
@@ -68,12 +98,13 @@ const onUpdate = async(records) => {
         
         
             console.log("___PUNTEROS__",followersNextCursor,followingsNextCursor);
-            console.log("Followers",followers.length)
-            console.log("followings",followings.length)
+            console.log("Followers",item.followers.length)
+            console.log("followings",item.followings.length)
             
-            await saveData(item);           
+            await saveData(item);
+            console.log("Updated!_______")
         }
-
+*/
         
     }));
 }
@@ -177,7 +208,7 @@ exports.handler = async (event) => {
         console.log("Length",newRecords.length)
         
         if (newRecords.length > 0) await onCreate(newRecords)
-        //if (updateRecords.length > 0) await onUpdate(updateRecords)
+        if (updateRecords.length > 0) await onUpdate(updateRecords)
         console.log("var records",newRecords);
         
         errMessage = "Todo ok"

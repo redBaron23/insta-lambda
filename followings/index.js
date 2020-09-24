@@ -102,7 +102,7 @@ exports.handler = async (event) => {
     
     try{
         if (userName && cookies){
-            json = await followings(userName,cookies,quantity);
+            json = await followings(userName,cookies,quantity,nextCursor);
             response.statusCode = 200
             response.body = JSON.stringify(json)        
         }
