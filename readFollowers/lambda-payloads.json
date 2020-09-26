@@ -1,7 +1,11 @@
 {
     "readFollowers": {
         "lambda": {
+<<<<<<< HEAD
             "userName": "pato.toledo"
+=======
+            "userName": "asdas"
+>>>>>>> b6e1e666041240281bebb96053ad805f8303c473
         }
     }
 }

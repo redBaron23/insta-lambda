@@ -16,13 +16,11 @@ const readFollowers = async (userName) => {
         }
     }
     
-    try {
+
         const data = await documentClient.get(params).promise();
+        if (!data.Item) throw "User not found";
         console.log(data.Item.followers);
         return data.Item.followers;
-    } catch (err) {
-        console.log(err);
-    }
 }
 exports.handler = async (event) => {
     // TODO implement
@@ -65,8 +63,13 @@ exports.handler = async (event) => {
     }
     catch(e){
         console.log("Algo se rompio",e)
+<<<<<<< HEAD
         errMessage = "Something went wrong";
         response.statusCode = 500;
+=======
+        errMessage = "User not found";
+        response.statusCode = 400;
+>>>>>>> b6e1e666041240281bebb96053ad805f8303c473
         response.body = JSON.stringify(errMessage);
     }
     return response;

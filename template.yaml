@@ -91,3 +91,19 @@ Resources:
       Description: ''
       MemorySize: 128
       Timeout: 15
+  readFollowers:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: readFollowers/index.handler
+      Runtime: nodejs12.x
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+  readFollowings:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: readFollowings/index.handler
+      Runtime: nodejs12.x
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
