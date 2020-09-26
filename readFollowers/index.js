@@ -41,7 +41,7 @@ exports.handler = async (event) => {
     }
     
 
-    const req = (event.httpMethod === "POST") ? JSON.parse(event.body) : event
+    const req = (event.httpMethod === "GET") ? JSON.parse(event.body) : event
 
     userName = req.userName;
 
@@ -63,13 +63,8 @@ exports.handler = async (event) => {
     }
     catch(e){
         console.log("Algo se rompio",e)
-<<<<<<< HEAD
-        errMessage = "Something went wrong";
-        response.statusCode = 500;
-=======
         errMessage = "User not found";
         response.statusCode = 400;
->>>>>>> b6e1e666041240281bebb96053ad805f8303c473
         response.body = JSON.stringify(errMessage);
     }
     return response;
