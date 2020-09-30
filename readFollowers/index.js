@@ -16,11 +16,11 @@ const readFollowers = async (userName) => {
         }
     }
     
-
         const data = await documentClient.get(params).promise();
         if (!data.Item) throw "User not found";
         console.log(data.Item.followers);
         return data.Item.followers;
+
 }
 exports.handler = async (event) => {
     // TODO implement
@@ -31,8 +31,7 @@ exports.handler = async (event) => {
 
     let userName,followers,errMessage;
     
-    
-    
+
     let response = {}
         response.headers = {
         "Access-Control-Allow-Headers" : "Content-Type",
@@ -41,7 +40,7 @@ exports.handler = async (event) => {
     }
     
 
-    const req = (event.httpMethod === "GET") ? JSON.parse(event.body) : event
+    const req = (event.httpMethod === "GET") ? event.queryStringParameters : event
 
     userName = req.userName;
 

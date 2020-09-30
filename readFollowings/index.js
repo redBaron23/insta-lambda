@@ -41,7 +41,7 @@ exports.handler = async (event) => {
     }
     
 
-    const req = (event.httpMethod === "GET") ? JSON.parse(event.body) : event
+    const req = (event.httpMethod === "GET") ? event.queryStringParameters : event
 
     userName = req.userName;
 

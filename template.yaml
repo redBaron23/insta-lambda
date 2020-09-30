@@ -107,3 +107,12 @@ Resources:
       Description: ''
       MemorySize: 128
       Timeout: 15
+  unfollowers:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: unfollowers/index.handler
+      Runtime: nodejs12.x
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: 'arn:aws:iam::754778745637:role/LambdaDynamoDBRole'

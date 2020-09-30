@@ -226,13 +226,13 @@ exports.handler = async (event) => {
       catch(e){
         console.log("Error en login",e)
         response = {
-          statusCode: e.code,
+          statusCode: 200,
           headers: {
           "Access-Control-Allow-Headers" : "Content-Type",
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
           },
-          body: JSON.stringify(e.message),
+          body: JSON.stringify(e.code),
         };          
       }
 
