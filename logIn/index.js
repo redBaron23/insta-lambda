@@ -12,7 +12,27 @@ const BROWSER = "chromium";
 
 
 
+
+const readItem = async (userName) => {
+    
+    
+    const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1"});
+    
+    const params = {
+        TableName: "Users",
+        Key: {
+          userName: userName
+        }
+    }
+    
+        const data = await documentClient.get(params).promise();
+        return data.Item;
+
+}
+
+
 const dynamoSetUser = async (userName,password,cookies) => {
+    let item;
     const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1"});
     
     const params = {
@@ -25,6 +45,13 @@ const dynamoSetUser = async (userName,password,cookies) => {
     }
     
     try {
+        item = await readItem(userName);
+        if(item){
+          item.password = password;
+          item.cookies = cookies;
+          params.Item = item;
+        }
+        
         const data = await documentClient.put(params).promise();
         console.log(data);
     } catch (err) {

@@ -1,7 +1,7 @@
 const AWS = require("aws-sdk");
 const lambda = new AWS.Lambda({ region: "us-east-1" });
 
-const waitTime = 20 * 1000 //20 sec
+const waitTime = 90 * 1000 //20 sec
 
 
 const getGarcas = async (userName) => {
