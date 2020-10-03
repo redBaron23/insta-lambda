@@ -4,6 +4,7 @@ Description: An AWS Serverless Specification template describing your function.
 Resources:
   logIn:
     Type: 'AWS::Serverless::Function'
+    Role: 'arn:aws:iam::754778745637:role/LambdaDynamoDBRole'
     Properties:
       Handler: logIn/index.handler
       Runtime: nodejs12.x
