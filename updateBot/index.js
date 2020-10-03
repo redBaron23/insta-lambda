@@ -108,6 +108,8 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
                         bot.follow.push(userName);
                     
                     //Si es el farm famous = static sigue la rutina, sino se da por concluido el bot
+                    console.log("El tipo deberia ser staticFarm y es",bot.type);
+                    console.log("La cantidad de unfollow deberia ser 0 para parar y es",bot.unfollow.length);
                     ((bot.type === "staticFarm") && (bot.unfollow.length === 0)) ? bot.action = "follow" : bot.status = "disabled"
                         
     
@@ -154,7 +156,7 @@ exports.handler = async (event) => {
     
     console.log("Update bot",event);
 
-    let userId,req,bots,cookies,errMessage,newRecords,updateRecords;
+    let bots,errMessage;
     let response = {}
     response.headers = {
         "Access-Control-Allow-Headers" : "Content-Type",
