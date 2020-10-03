@@ -116,3 +116,12 @@ Resources:
       MemorySize: 128
       Timeout: 15
       Role: 'arn:aws:iam::754778745637:role/LambdaDynamoDBRole'
+  startBot:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: startBot/index.handler
+      Runtime: nodejs12.x
+      Description: ''
+      MemorySize: 128
+      Timeout: 15
+      Role: 'arn:aws:iam::754778745637:role/LambdaDynamoDBRole'
