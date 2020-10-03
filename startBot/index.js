@@ -10,6 +10,7 @@ const famousUserNames = ["instagram","cristiano","arianagrande","therock","kylie
 const startBot = async(userName, password, type) => {
     
     let res,bot;
+    bot = {};
     res = "Something went wrong";
     const user = await getUser(userName);
 
@@ -26,7 +27,7 @@ const startBot = async(userName, password, type) => {
         bot.unfollow = [];
         bot.follow = (type === "static") ? famousUserNames : await getFans();
         
-        await saveBot(user);
+        await saveBot(bot);
         res = "Bot created";
     }
     else {
@@ -125,7 +126,7 @@ exports.handler = async(event) => {
             };
         }
         catch (e) {
-            console.log("Error en login", e)
+            console.log("Error en startBot", e)
             response = {
                 statusCode: 200,
                 headers: {
