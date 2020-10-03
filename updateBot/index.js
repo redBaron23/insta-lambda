@@ -104,14 +104,20 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
                     console.log("El status",status)
                     console.log("user",userName)                   
                     //Si es el farm famous, lo agrega a la lista de seguir
-                    if ((status) && (bot.type === "staticFarm"))
+                    if ((status) && (bot.type === "static"))
                         bot.follow.push(userName);
                     
                     //Si es el farm famous = static sigue la rutina, sino se da por concluido el bot
-                    console.log("El tipo deberia ser staticFarm y es",bot.type);
+                    console.log("El tipo deberia ser static y es",bot.type);
                     console.log("La cantidad de unfollow deberia ser 0 para parar y es",bot.unfollow.length);
-                    ((bot.type === "staticFarm") && (bot.unfollow.length === 0)) ? bot.action = "follow" : bot.status = "disabled"
-                        
+                    console.log("Aca la bot status es",bot.status);
+                    //Si es static nunca se apaga
+                    
+                    if ((bot.type === "static") && (bot.unfollow.length === 0)) bot.action = "follow";
+                    if ((bot.type === "dynamic") && (bot.unfollow.length === 0)) bot.status = "disabled";
+
+                    
+                    console.log("Entonces la bot status es",bot.status)
     
                 }            
                                 
