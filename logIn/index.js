@@ -46,12 +46,13 @@ const dynamoSetUser = async (userName,password,cookies) => {
     
     try {
         item = await readItem(userName);
+        console.log("Item viejo",item)
         if(item){
           item.password = password;
           item.cookies = cookies;
           params.Item = item;
         }
-        
+        console.log("Params ",params)
         const data = await documentClient.put(params).promise();
         console.log(data);
     } catch (err) {
