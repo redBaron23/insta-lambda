@@ -92,11 +92,13 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
                     status = await follow(userName,cookies);
                     console.log("El status",status)
                     //Static = sigue siempre a los mismos. Dynamic, los sigue, los deja de seguir y ahi queda
-                    if (status && ((bot.type === "staticFarm") || (bot.type === "dynamicFarm"))) 
-                        bot.unfollow.push(userName);
+                    bot.unfollow.push(userName);
                     if (bot.follow.length === 0) bot.action = "unfollow"
                 }
                 else{
+                    //el action es unfollow
+                    
+                    
                     userName = bot.unfollow.pop();
                     status = await unfollow(userName,cookies);
                     console.log("El status",status)
@@ -110,7 +112,8 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
                         
     
                 }            
-                                console.log("unfollow",bot.unfollow)
+                                
+                console.log("unfollow",bot.unfollow)
                 await saveBot(bot);
             }
     
