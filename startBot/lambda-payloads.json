@@ -1,0 +1,9 @@
+{
+    "startBot": {
+        "lambda": {
+            "userName": "redbaron389",
+            "password": "SEGa1122",
+            "type": "static"
+        }
+    }
+}
