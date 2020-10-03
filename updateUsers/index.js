@@ -193,7 +193,7 @@ exports.handler = async (event) => {
     
     console.log("myEvent",event);
 
-    let userId,req,userName,cookies,errMessage,newRecords,updateRecords;
+    let errMessage,newRecords,updateRecords;
     let response = {}
     response.headers = {
         "Access-Control-Allow-Headers" : "Content-Type",
