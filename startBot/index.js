@@ -85,12 +85,9 @@ const getUser = async(userName) => {
 
 exports.handler = async(event) => {
     // TODO implement
+    // llamar a la tabla fans y agarrar algunos
 
-    //const userName = event.userName;
-    //const password = event.password;
-    //const code = event.code;
 
-    //Post parameters
 
     let userName, password, req, response, type, cookies, errMessage;
 
