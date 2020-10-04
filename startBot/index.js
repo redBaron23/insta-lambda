@@ -7,7 +7,7 @@ AWS.config.update({ region: "us-east-1" });
 const famousUserNames = ["instagram","cristiano","arianagrande","therock","kyliejenner","selenagomez","kimkardashian","leomessi","beyonce","neymarjr","justinbieber","natgeo","taylorswift","kendalljenner","jlo","nickiminaj","nike","khloekardashian","mileycyrus","katyperry","kourtneykardash","kevinhart4real","theellenshow","realmadrid","fcbarcelona","ddlovato","badgalriri","zendaya","victoriassecret","iamcardib","champagnepapi","shakira","chrisbrownofficial","kingjames","vindiesel","billieeilish","virat.kohli","davidbeckham","championsleague","nasa","justintimberlake","emmawatson","shawnmendes","gigihadid","priyankachopra","9gag","ronaldinho","maluma","camilacabello","deepikapadukone","nba","aliaabhatt","shraddhakapoor","Anita","marvel","dualipa","snoopdogg","robertdowneyjr","willsmith","Jamesrodriguez10","marcelotwelve","hudabeauty","caradelevingne","leonardodicaprio","nikefootball","garethbale11","zlatanibrahimovic","chrishemsworth","narendramodi","zacefron","ladygaga","jacquelinef143","raffinagita1717","whinderssonnunes","5.min.crafts","tatawerneck","paulpogba","jbalvin","ayutingting92","lelepons","k.mbappe","akshaykumar","gucci","Juventus","chanelofficial","daddyyankee","michelleobama","zara","gal_gadot","nehakakkar","natgeotravel","sergioramos","vanessahudgens","mosalah","katrinakaif","paulodybala","premierleague","louisvuitton","anushkasharma","luissuarez9"]
 
 
-const startBot = async(userName, password, type) => {
+const startBot = async(userName, password, type,unfollowers) => {
     
     let res,bot;
     bot = {};
@@ -23,9 +23,16 @@ const startBot = async(userName, password, type) => {
         bot.userName = user.userName;
         bot.cookies = user.cookies;
         bot.status = "enabled";
-        bot.action = "follow";
-        bot.unfollow = [];
-        bot.follow = (type === "static") ? famousUserNames : await getFans();
+        if(unfollowers){
+            bot.unfollow = unfollowers;
+            bot.follow = [];
+            bot.action = "unfollow";
+        }
+        else{
+            bot.unfollow = [];
+            bot.follow = (type === "static") ? famousUserNames : await getFans();
+            bot.action = "follow";
+        }
         
         await saveBot(bot);
         res = "Bot created";
@@ -89,7 +96,7 @@ exports.handler = async(event) => {
 
 
 
-    let userName, password, req, response, type, cookies, errMessage;
+    let userName, password, req, response, type, cookies, errMessage, unfollowers;
 
     console.log("Login Event", event)
 
@@ -101,13 +108,14 @@ exports.handler = async(event) => {
         userName = req.userName;
         password = req.password;
         type = req.type
+        unfollowers = req.unfollowers
 
 
         console.log("Data", userName, password, type);
 
 
         try {
-            const status = await startBot(userName, password, type);
+            const status = await startBot(userName, password, type,unfollowers);
 
             console.log("RES", status);
 
