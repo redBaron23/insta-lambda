@@ -126,4 +126,4 @@ Resources:
       Description: ''
       MemorySize: 128
       Timeout: 15
-      Role: 'arn:aws:iam::754778745637:role/dynamoBotRead'
+      Role: 'arn:aws:iam::754778745637:role/DynamoBotUserLambda'
