@@ -9,7 +9,7 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
 
 
     
-    const follow = async (userName, cookies) => {
+    const follow = async (userName, cookies,ratio) => {
         console.log("Follow",userName);
 
         return await new Promise((resolve, reject) => {
@@ -18,6 +18,7 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
             Payload: JSON.stringify({
                 userName,
                 cookies,
+                ratio
             }),
         };
         
@@ -89,7 +90,7 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
                 cookies = bot.cookies;
                 if (bot.action === "follow"){
                     userName = bot.follow.pop();
-                    status = await follow(userName,cookies);
+                    status = await follow(userName,cookies,bot.ratio);
                     console.log("El status",status)
                     //Static = sigue siempre a los mismos. Dynamic, los sigue, los deja de seguir y ahi queda
                     bot.unfollow.push(userName);
