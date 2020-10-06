@@ -4,12 +4,12 @@ AWS.config.update({ region: "us-east-1" });
 
 
 
-const famousUserNames = ["instagram","cristiano","arianagrande","therock","kyliejenner","selenagomez","kimkardashian","leomessi","beyonce","neymarjr","justinbieber","natgeo","taylorswift","kendalljenner","jlo","nickiminaj","nike","khloekardashian","mileycyrus","katyperry","kourtneykardash","kevinhart4real","theellenshow","realmadrid","fcbarcelona","ddlovato","badgalriri","zendaya","victoriassecret","iamcardib","champagnepapi","shakira","chrisbrownofficial","kingjames","vindiesel","billieeilish","virat.kohli","davidbeckham","championsleague","nasa","justintimberlake","emmawatson","shawnmendes","gigihadid","priyankachopra","9gag","ronaldinho","maluma","camilacabello","deepikapadukone","nba","aliaabhatt","shraddhakapoor","Anita","marvel","dualipa","snoopdogg","robertdowneyjr","willsmith","Jamesrodriguez10","marcelotwelve","hudabeauty","caradelevingne","leonardodicaprio","nikefootball","garethbale11","zlatanibrahimovic","chrishemsworth","narendramodi","zacefron","ladygaga","jacquelinef143","raffinagita1717","whinderssonnunes","5.min.crafts","tatawerneck","paulpogba","jbalvin","ayutingting92","lelepons","k.mbappe","akshaykumar","gucci","Juventus","chanelofficial","daddyyankee","michelleobama","zara","gal_gadot","nehakakkar","natgeotravel","sergioramos","vanessahudgens","mosalah","katrinakaif","paulodybala","premierleague","louisvuitton","anushkasharma","luissuarez9"]
+const famousUserNames = ["instagram", "cristiano", "arianagrande", "therock", "kyliejenner", "selenagomez", "kimkardashian", "leomessi", "beyonce", "neymarjr", "justinbieber", "natgeo", "taylorswift", "kendalljenner", "jlo", "nickiminaj", "nike", "khloekardashian", "mileycyrus", "katyperry", "kourtneykardash", "kevinhart4real", "theellenshow", "realmadrid", "fcbarcelona", "ddlovato", "badgalriri", "zendaya", "victoriassecret", "iamcardib", "champagnepapi", "shakira", "chrisbrownofficial", "kingjames", "vindiesel", "billieeilish", "virat.kohli", "davidbeckham", "championsleague", "nasa", "justintimberlake", "emmawatson", "shawnmendes", "gigihadid", "priyankachopra", "9gag", "ronaldinho", "maluma", "camilacabello", "deepikapadukone", "nba", "aliaabhatt", "shraddhakapoor", "Anita", "marvel", "dualipa", "snoopdogg", "robertdowneyjr", "willsmith", "Jamesrodriguez10", "marcelotwelve", "hudabeauty", "caradelevingne", "leonardodicaprio", "nikefootball", "garethbale11", "zlatanibrahimovic", "chrishemsworth", "narendramodi", "zacefron", "ladygaga", "jacquelinef143", "raffinagita1717", "whinderssonnunes", "5.min.crafts", "tatawerneck", "paulpogba", "jbalvin", "ayutingting92", "lelepons", "k.mbappe", "akshaykumar", "gucci", "Juventus", "chanelofficial", "daddyyankee", "michelleobama", "zara", "gal_gadot", "nehakakkar", "natgeotravel", "sergioramos", "vanessahudgens", "mosalah", "katrinakaif", "paulodybala", "premierleague", "louisvuitton", "anushkasharma", "luissuarez9"]
 
 
-const startBot = async(userName, password, type,unfollowers) => {
-    
-    let res,bot;
+const startBot = async(userName, password, type, unfollowers,ratio) => {
+
+    let res, bot;
     bot = {};
     res = "Something went wrong";
     const user = await getUser(userName);
@@ -23,18 +23,21 @@ const startBot = async(userName, password, type,unfollowers) => {
         bot.userName = user.userName;
         bot.cookies = user.cookies;
         bot.status = "enabled";
-        if(unfollowers){
+        
+        //Si existe ratio
+        if (ratio) bot.ratio = ratio;
+        if (unfollowers) {
             bot.unfollow = unfollowers;
             bot.follow = [];
             bot.action = "unfollow";
         }
-        else{
+        else {
             bot.unfollow = [];
             bot.follow = (type === "static") ? famousUserNames : await getFans();
             bot.action = "follow";
         }
-        
-        await saveBot(bot);
+        console.log(bot);
+        //await saveBot(bot);
         res = "Bot created";
     }
     else {
@@ -46,7 +49,7 @@ const startBot = async(userName, password, type,unfollowers) => {
 
 const getFans = async() => {
     //ToDo llamar a la tabla fans y agarrar algunos
-    return ["cristiano","redbaron"]
+    return ["cristiano", "redbaron"]
 }
 
 
@@ -96,7 +99,7 @@ exports.handler = async(event) => {
 
 
 
-    let userName, password, req, response, type, cookies, errMessage, unfollowers;
+    let userName, password, req, ratio, response, type, cookies, errMessage, unfollowers;
 
     console.log("Login Event", event)
 
@@ -107,15 +110,15 @@ exports.handler = async(event) => {
 
         userName = req.userName;
         password = req.password;
-        type = req.type
-        unfollowers = req.unfollowers
-
+        type = req.type;
+        unfollowers = req.unfollowers;
+        ratio = req.ratio;
 
         console.log("Data", userName, password, type);
 
 
         try {
-            const status = await startBot(userName, password, type,unfollowers);
+            const status = await startBot(userName, password, type, unfollowers,ratio);
 
             console.log("RES", status);
 
