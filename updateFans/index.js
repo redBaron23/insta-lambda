@@ -8,19 +8,21 @@ const lambda = new AWS.Lambda({ region: "us-east-1" });
 
 
 const getBots = async() => {
-
+    let botardos;
     console.log("Dynamo");
     const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" });
 
     var params = {
-        TableName: "Bot",
+        TableName: "Users",
         Key: {
             slave: true
         }
     };
-
     const bots = await documentClient.scan(params).promise();
-    return bots.Items
+
+    botardos = bots.Items.filter(i => i.slave);
+    console.log("Botardos",botardos)
+    return botardos
 }
 
 
