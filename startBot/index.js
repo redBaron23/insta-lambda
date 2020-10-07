@@ -31,12 +31,15 @@ const startBot = async(userName, password, type, unfollowers, ratio, bigFish) =>
             bot.action = "unfollow";
         }
         else { //Dynamic o static
-            if (type === "static") {//Este es el de los famosos
+            if (type === "static") { //Este es el de los famosos
                 bot.follow = famousUserNames;
             }
-            else {//ESte es el que le doy un usuario con seguidores y ratio
+            else { //ESte es el que le doy un usuario con seguidores y ratio
                 bot.ratio = ratio;
-                bot.follow = await getFans("psicologia_memes");
+                bot.follow = await getFans(bigFish, userName);
+                
+                //Si no le entraron los seguidores se queda esperando
+                if (!bot.follow.length) bot.status = "waiting";
                 //Si agrego el fish aca, cada x tiempo tengo que agregarle sus seguidores
                 bot.bigFish = bigFish;
             }
@@ -54,22 +57,63 @@ const startBot = async(userName, password, type, unfollowers, ratio, bigFish) =>
 }
 
 
-const getFans = async(userName) => {
-    let user = "psicologia_memes"
-    //ToDo llamar a la tabla fans y agarrar algunos
+const createFish = async(fish, userName) => {
+
+    console.log("create ", fish, userName);
+
     const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" });
 
+    //Tener cuidado username es el que queremos extraer segudiores
+    //Suscriber somos nosotros, para que nos de los seguidores a
+    //La otra tabla
     const params = {
         TableName: "Fans",
-        Key: {
-            userName: user
+        Item: {
+            "userName": fish,
+            "suscriber": userName
         }
     }
 
-    const data = await documentClient.get(params).promise();
-    if (!data.Item) throw "User not found";
-    console.log(data.Item.followers);
-    return data.Item.followers;
+    try {
+        await documentClient.put(params).promise();
+    }
+    catch (err) {
+        console.log(err);
+    }
+
+}
+
+
+const getFans = async(fish, userName) => {
+    //ToDo llamar a la tabla fans y agarrar algunos
+    let data, params;
+    let response = [];
+    const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" });
+
+    if (fish) {
+        params = {
+            TableName: "Fans",
+            Key: {
+                userName: fish
+            }
+        }
+
+        data = await documentClient.get(params).promise();
+        console.log("La data", data.length)
+        if (data.length) response = data.Item.followers;
+        else await createFish(fish, userName);
+    }
+    else {
+        params = {
+            TableName: "Fans",
+            Limit: 1
+        }
+        data = await documentClient.scan(params).promise();
+        if (data.length) response = data.Items[0].followers;
+    }
+    console.log("LA random data", response)
+
+    return response;
 }
 
 
@@ -140,7 +184,7 @@ exports.handler = async(event) => {
 
 
         try {
-            const status = await startBot(userName, password, type, unfollowers, ratio);
+            const status = await startBot(userName, password, type, unfollowers, ratio, bigFish);
 
             console.log("RES", status);
 
