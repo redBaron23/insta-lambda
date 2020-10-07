@@ -21,7 +21,7 @@ const getBots = async() => {
     const bots = await documentClient.scan(params).promise();
 
     botardos = bots.Items.filter(i => i.slave);
-    console.log("Botardos",botardos)
+    console.log("Botardos", botardos)
     return botardos
 }
 
@@ -40,42 +40,101 @@ const getFishes = async() => {
 }
 
 const start = async(bots, fishes) => {
-    //console.log("El bot", bots);
-    let bot, fish, nextCursor, followers, followersNextCursor;
 
-    bot = bots[0];
-    fish = fishes[0];
 
-    //Arranca
-    console.log("ashanca")
-    followers = fish.followers;
-    console.log("El fish", fish)
+    await Promise.all(fishes.map(async(fish) => {
+        //console.log("El bot", bots);
+        let bot, botNumber, nextCursor, followersNextCursor;
+        let followers = [];
+        //Bot a usar random
+        botNumber = Math.floor(Math.random() * bots.length);
+        console.log("Bot number", botNumber)
+        bot = bots[botNumber];
+        console.log("Bot ", bot)
 
-    console.log("El fish", followers.length)
-    if (followers.length && fish.nextCursor) {
-        let newFollowers;
-        //Ya tiene elementos y no esta lleno
-        console.log("Si");
-        [followers, followersNextCursor] = await getFollowers(fish.userName, bot.cookies, fish.nextCursor);
-        newFollowers = [...fish.followers, ...followers]
-        fish.followers = newFollowers;
-        fish.nextCursor = followersNextCursor;
-        await saveFish(fish);
-    }
-    else {
-        //Cargamos por primera vez
-        const [followers, followersNextCursor] = await getFollowers(fish.userName, bot.cookies, nextCursor);
 
-        fish.followers = followers;
-        fish.nextCursor = followersNextCursor;
+        //Arranca
+        console.log("ashanca")
+        if (fish.followers) followers = fish.followers;
+        console.log("El fish", fish)
 
-        await saveFish(fish);
-        console.log("Los seguidores", followers.length);
-    }
+        console.log("Fish followers length", followers.length)
+        if (followers.length && fish.nextCursor) {
+            let newFollowers;
+            //Ya tiene elementos y no esta lleno
+            console.log("Si");
+            [followers, followersNextCursor] = await getFollowers(fish.userName, bot.cookies, fish.nextCursor);
+            newFollowers = [...fish.followers, ...followers]
+            fish.followers = newFollowers;
+            fish.nextCursor = followersNextCursor;
+            await saveFish(fish);
+        }
+        else {
+            //Cargamos por primera vez
+            //ToDo Hay que enviarle los followers al que lo pidio
+            const [followers, followersNextCursor] = await getFollowers(fish.userName, bot.cookies, nextCursor);
 
+            fish.followers = followers;
+            fish.nextCursor = followersNextCursor;
+
+            await saveFish(fish);
+            await saveBot(fish.suscriber, followers);
+            console.log("Los seguidores", followers.length);
+        }
+    }));
 
 }
 
+const getBot = async(userName) => {
+    //ToDo llamar a la tabla fans y agarrar algunos
+    let data, params;
+    let response = [];
+    const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" });
+
+
+    params = {
+        TableName: "Bot",
+        Key: {
+            userName: userName
+        }
+    }
+
+    data = await documentClient.get(params).promise();
+
+    response = data.Item;
+
+    console.log("LA data", response)
+
+    return response;
+}
+
+
+const saveBot = async(userName, followers) => {
+
+    let bot;
+    
+    bot = await getBot(userName);
+    bot.followers = followers;
+    bot.status = "enabled";
+    
+    console.log("userName", userName);
+    console.log("followers", followers);
+    const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" });
+
+    const params = {
+        TableName: "Bot",
+        Item: bot
+    }
+
+    try {
+        const data = await documentClient.put(params).promise();
+        console.log("DATITATATATATA", data);
+    }
+    catch (err) {
+        console.log(err);
+    }
+
+}
 
 const saveFish = async(item) => {
 
@@ -90,7 +149,6 @@ const saveFish = async(item) => {
 
     try {
         const data = await documentClient.put(params).promise();
-        console.log(data);
     }
     catch (err) {
         console.log(err);
