@@ -58,7 +58,7 @@ const start = async(bots, fishes) => {
         if (fish.followers) followers = fish.followers;
         console.log("El fish", fish)
 
-        console.log("Fish followers length", followers.length)
+        console.log("Fish followers length", followers.length,"nombre",fish.userName,"next",fish.nextCursor)
         if (followers.length && fish.nextCursor) {
             let newFollowers;
             //Ya tiene elementos y no esta lleno
@@ -114,7 +114,7 @@ const saveBot = async(userName, followers) => {
     let bot;
     
     bot = await getBot(userName);
-    bot.followers = followers;
+    bot.follow = followers;
     bot.status = "enabled";
     
     console.log("userName", userName);
