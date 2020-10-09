@@ -37,7 +37,7 @@ const startBot = async(userName, password, type, unfollowers, ratio, bigFish) =>
             else { //ESte es el que le doy un usuario con seguidores y ratio
                 bot.ratio = ratio;
                 bot.follow = await getFans(bigFish, userName);
-                
+
                 //Si no le entraron los seguidores se queda esperando
                 if (!bot.follow.length) bot.status = "waiting";
                 //Si agrego el fish aca, cada x tiempo tengo que agregarle sus seguidores
@@ -90,6 +90,8 @@ const getFans = async(fish, userName) => {
     let response = [];
     const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" });
 
+
+    console.log("El fish es", fish);
     if (fish) {
         params = {
             TableName: "Fans",
@@ -99,8 +101,8 @@ const getFans = async(fish, userName) => {
         }
 
         data = await documentClient.get(params).promise();
-        console.log("La data", data.length)
-        if (data.length) response = data.Item.followers;
+        console.log("La data___", data)
+        if (data.Item) response = data.Item.followers;
         else await createFish(fish, userName);
     }
     else {
@@ -109,7 +111,9 @@ const getFans = async(fish, userName) => {
             Limit: 1
         }
         data = await documentClient.scan(params).promise();
-        if (data.length) response = data.Items[0].followers;
+        console.log("esto recibi sin fish", data.Items[0].followers)
+
+        response = data.Items[0].followers;
     }
     console.log("LA random data", response)
 

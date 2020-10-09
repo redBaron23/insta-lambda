@@ -6,7 +6,7 @@ AWS.config.update({ region: "us-east-1" });
 
 const lambda = new AWS.Lambda({ region: "us-east-1" });
 
-const minTime = 5;
+const minTime = 9;
 const maxTime = 12;
 const sleepExes = 3;
 
@@ -120,13 +120,13 @@ const start = async(bots) => {
                 bot.count = bot.count + 1;
 
                 let userName, cookies, status;
-
-                console.log(bot);
+                console.log("__________________________")
+                console.log("El bot a ejecutar es",bot.userName);
+                console.log("Informacion completa",bot)
                 cookies = bot.cookies;
                 if (bot.action === "follow") {
                     userName = bot.follow.pop();
                     status = await follow(userName, cookies, bot.ratio);
-                    console.log("_____________El status", status)
                     //Static = sigue siempre a los mismos. Dynamic, los sigue, los deja de seguir y ahi queda
 
                     //Solo lo dejo de seguir si es el status que bussco
@@ -139,8 +139,6 @@ const start = async(bots) => {
 
                     userName = bot.unfollow.pop();
                     status = await unfollow(userName, cookies);
-                    console.log("El status", status)
-                    console.log("user", userName)
                     //Si es el farm famous, lo agrega a la lista de seguir
                     if ((status) && (bot.type === "static"))
                         bot.follow.push(userName);
@@ -155,7 +153,6 @@ const start = async(bots) => {
                     if ((bot.type === "dynamic") && (bot.unfollow.length === 0)) bot.status = "disabled";
 
 
-                    console.log("Entonces la bot status es", bot.status)
 
                 }
 
@@ -174,6 +171,8 @@ const start = async(bots) => {
 
 
             }
+            console.log("Listo para guardarse ",bot);
+            console.log("_________________________")
             await saveBot(bot);
         }
 
