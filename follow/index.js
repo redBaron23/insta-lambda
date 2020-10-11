@@ -19,7 +19,7 @@ const follow = async(userName, cookies, ratio) => {
     //Sigue / siguen
     currentRatio = followings / followers;
 
-    await saveFan(userName,currentRatio);
+    await saveFan(userName, currentRatio);
     if ((currentRatio >= ratio) || (!ratio)) {
         const url = "https://www.instagram.com/web/friendships/" + userId + "/follow/";
 
@@ -62,15 +62,25 @@ const follow = async(userName, cookies, ratio) => {
 
 const saveFan = async(userName, ratio) => {
 
-    let random;
-    let user = {
-        userName:userName,
-        ratio:ratio
+    let random, currentFollower, user;
+    user = {
+        userName: userName,
+        ratio: ratio
     }
     if (ratio > bestRatio) {
         random = await getFan("random");
-        random.followers.push(user);
-        await writeFan(random);
+
+        currentFollower = random.followers.find(i => i.userName === userName);
+
+        if (!currentFollower) {
+            random.followers.push(user);
+            await writeFan(random);
+
+        }
+        else {
+            console.log("Ya estaba");
+        }
+
     }
 }
 
@@ -157,7 +167,7 @@ exports.handler = async(event) => {
     userName = req.userName;
     cookies = req.cookies;
     ratio = req.ratio;
-
+    
     try {
 
         if (userName && cookies) {
