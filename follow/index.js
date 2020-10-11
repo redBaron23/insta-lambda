@@ -4,7 +4,7 @@ const AWS = require("aws-sdk");
 
 const lambda = new AWS.Lambda({ region: "us-east-1" });
 
-
+const bestRatio = 1.1;
 
 const follow = async(userName, cookies, ratio) => {
 
@@ -19,8 +19,8 @@ const follow = async(userName, cookies, ratio) => {
     //Sigue / siguen
     currentRatio = followings / followers;
 
-
-    if ((currentRatio >= ratio)|| (!ratio)) {
+    await saveFan(userName,currentRatio);
+    if ((currentRatio >= ratio) || (!ratio)) {
         const url = "https://www.instagram.com/web/friendships/" + userId + "/follow/";
 
 
@@ -59,6 +59,57 @@ const follow = async(userName, cookies, ratio) => {
 
 }
 
+
+const saveFan = async(userName, ratio) => {
+
+    let random;
+    let user = {
+        userName:userName,
+        ratio:ratio
+    }
+    if (ratio > bestRatio) {
+        random = await getFan("random");
+        random.followers.push(user);
+        await writeFan(random);
+    }
+}
+
+const writeFan = async(item) => {
+
+
+
+    const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" });
+
+    const params = {
+        TableName: "Fans",
+        Item: item
+    }
+
+    try {
+        const data = await documentClient.put(params).promise();
+        console.log(data);
+    }
+    catch (err) {
+        console.log(err);
+    }
+
+}
+
+const getFan = async(userName) => {
+    const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" });
+
+    const params = {
+        TableName: "Fans",
+        Key: {
+            userName: userName
+        }
+    }
+
+    const data = await documentClient.get(params).promise();
+    if (!data.Item) throw "User not found";
+    console.log(data.Item);
+    return data.Item;
+}
 
 const getUserInfo = async(userName, cookies) => {
     return await new Promise((resolve, reject) => {

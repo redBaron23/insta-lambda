@@ -1,11 +1,11 @@
 {
     "startBot": {
         "lambda": {
-            "userName": "redbaron395",
+            "userName": "redbaron389",
             "password": "SEGa1122",
             "type": "dynamic",
-            "ratio": 2,
-            "bigFish": "justinbieber"
+            "bigFish": "pato.toledo",
+            "ratio": 2
         }
     }
 }
