@@ -44,42 +44,46 @@ const start = async(bots, fishes) => {
 
     await Promise.all(fishes.map(async(fish) => {
         //console.log("El bot", bots);
-        let bot, botNumber, nextCursor, followersNextCursor;
-        let followers = [];
-        //Bot a usar random
-        botNumber = Math.floor(Math.random() * bots.length);
-        console.log("Bot number", botNumber)
-        bot = bots[botNumber];
-        console.log("Bot ", bot)
+        if (fish.userName !== "random") {
 
 
-        //Arranca
-        console.log("ashanca")
-        if (fish.followers) followers = fish.followers;
-        console.log("El fish", fish)
+            let bot, botNumber, nextCursor, followersNextCursor;
+            let followers = [];
+            //Bot a usar random
+            botNumber = Math.floor(Math.random() * bots.length);
+            console.log("Bot number", botNumber)
+            bot = bots[botNumber];
+            console.log("Bot ", bot)
 
-        console.log("Fish followers length", followers.length,"nombre",fish.userName,"next",fish.nextCursor)
-        if (followers.length && fish.nextCursor) {
-            let newFollowers;
-            //Ya tiene elementos y no esta lleno
-            console.log("Si");
-            [followers, followersNextCursor] = await getFollowers(fish.userName, bot.cookies, fish.nextCursor);
-            newFollowers = [...fish.followers, ...followers]
-            fish.followers = newFollowers;
-            fish.nextCursor = followersNextCursor;
-            await saveFish(fish);
-        }
-        else {
-            //Cargamos por primera vez
-            //ToDo Hay que enviarle los followers al que lo pidio
-            const [followers, followersNextCursor] = await getFollowers(fish.userName, bot.cookies, nextCursor);
 
-            fish.followers = followers;
-            fish.nextCursor = followersNextCursor;
+            //Arranca
+            console.log("ashanca")
+            if (fish.followers) followers = fish.followers;
+            console.log("El fish", fish)
 
-            await saveFish(fish);
-            await saveBot(fish.suscriber, followers);
-            console.log("Los seguidores", followers.length);
+            console.log("Fish followers length", followers.length, "nombre", fish.userName, "next", fish.nextCursor)
+            if (followers.length && fish.nextCursor) {
+                let newFollowers;
+                //Ya tiene elementos y no esta lleno
+                console.log("Si");
+                [followers, followersNextCursor] = await getFollowers(fish.userName, bot.cookies, fish.nextCursor);
+                newFollowers = [...fish.followers, ...followers]
+                fish.followers = newFollowers;
+                fish.nextCursor = followersNextCursor;
+                await saveFish(fish);
+            }
+            else {
+                //Cargamos por primera vez
+                //ToDo Hay que enviarle los followers al que lo pidio
+                const [followers, followersNextCursor] = await getFollowers(fish.userName, bot.cookies, nextCursor);
+
+                fish.followers = followers;
+                fish.nextCursor = followersNextCursor;
+
+                await saveFish(fish);
+                await saveBot(fish.suscriber, followers);
+                console.log("Los seguidores", followers.length);
+            }
         }
     }));
 
@@ -112,11 +116,11 @@ const getBot = async(userName) => {
 const saveBot = async(userName, followers) => {
 
     let bot;
-    
+
     bot = await getBot(userName);
     bot.follow = followers;
     bot.status = "enabled";
-    
+
     console.log("userName", userName);
     console.log("followers", followers);
     const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" });
