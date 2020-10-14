@@ -103,7 +103,30 @@ const getBots = async() => {
 }
 
 
+const getFans = async(lastUserName, bigFish) => {
+    console.log("El ultimo usuario es", lastUserName);
+    console.log("El bigfish", bigFish);
 
+    let lastIndex, followers;
+
+    const documentClient = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" });
+
+    const params = {
+        TableName: "Fans",
+        Key: {
+            userName: bigFish
+        }
+    }
+
+    const data = await documentClient.get(params).promise();
+    if (!data.Item) throw "User not found";
+    lastIndex = data.Item.followers.indexOf(lastUserName)
+    followers = data.Item.followers.filter((elem, index) => index > lastIndex)
+    console.log(followers);
+
+    return followers;
+
+}
 
 
 const start = async(bots) => {
@@ -128,7 +151,7 @@ const start = async(bots) => {
                     userName = bot.follow.pop();
                     status = await follow(userName, cookies, bot.ratio);
                     //Static = sigue siempre a los mismos. Dynamic, los sigue, los deja de seguir y ahi queda	
-                    console.log("El status es",status)
+                    console.log("El status es", status)
                     //Solo lo dejo de seguir si es el status que bussco	
                     if (status.includes("ok")) bot.unfollow.push(userName);
                     if (bot.follow.length === 0) bot.action = "unfollow"
@@ -149,10 +172,10 @@ const start = async(bots) => {
                     console.log("Aca la bot status es", bot.status);
                     //Si es static nunca se apaga	
 
-                    if ((bot.type === "static") && (bot.unfollow.length === 0)) bot.action = "follow";
+                    if (((bot.type === "static") && (bot.unfollow.length === 0)) || (bot.follow.length)) bot.action = "follow";
                     if ((bot.type === "dynamic") && (bot.unfollow.length === 0)) bot.status = "disabled";
 
-
+                    if ((bot.unfollow.length === 1) && (bot.bigFish)) bot.follow = await getFans(bot.unfollow[0], bot.bigFish);
 
                 }
 
