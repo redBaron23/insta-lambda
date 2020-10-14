@@ -126,11 +126,11 @@ const start = async(bots) => {
                 cookies = bot.cookies;
                 if (bot.action === "follow") {
                     userName = bot.follow.pop();
-                    status = await follow(userName, cookies, bot.ratio);
+                    status = await follow("aracelihache", cookies, bot.ratio);
                     //Static = sigue siempre a los mismos. Dynamic, los sigue, los deja de seguir y ahi queda	
-
+                    console.log("El status es",status)
                     //Solo lo dejo de seguir si es el status que bussco	
-                    if (status === "ok") bot.unfollow.push(userName);
+                    if (status.includes("ok")) bot.unfollow.push(userName);
                     if (bot.follow.length === 0) bot.action = "unfollow"
                 }
                 else {
